@@ -3,12 +3,57 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
+  "description": "TAMV MD-X4 - Next Generation Metaverse Platform",
+  "author": "Edwin Oswaldo Castillo Trejo",
+  "license": "PROPRIETARY",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "dev:host": "vite --host",
+    "build": "tsc --noEmit && vite build",
     "build:dev": "vite build --mode development",
+    "build:analyze": "vite build --analyze",
     "preview": "vite preview",
-    "lint": "eslint ."
+    
+    "lint": "eslint . --ext .ts,.tsx,.js,.jsx",
+    "lint:fix": "eslint . --ext .ts,.tsx,.js,.jsx --fix",
+    "lint:staged": "lint-staged",
+    "lint:quiet": "eslint . --quiet --ext .ts,.tsx",
+    
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,md,json,html}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,css,md,json,html}\"",
+    
+    "typecheck": "tsc --noEmit",
+    "typecheck:full": "tsc --noEmit --pretty",
+    
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "test:ui": "vitest --ui",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    
+    "prepare": "husky install",
+    "precommit": "lint-staged",
+    
+    "check": "npm run typecheck && npm run lint && npm run format:check",
+    "check:all": "npm run typecheck && npm run lint && npm run test && npm run build",
+    
+    "clean": "rm -rf dist node_modules/.vite",
+    "clean:all": "rm -rf dist node_modules",
+    
+    "validate": "npm run check",
+    
+    "docs:generate": "typedoc",
+    "docs:preview": "npx serve docs",
+    
+    "docker:build": "docker build -t tamv-mdx4 .",
+    "docker:run": "docker run -p 3000:3000 tamv-mdx4",
+    "docker:compose": "docker-compose up",
+    
+    "k8s:deploy": "kubectl apply -f k8s/",
+    "k8s:status": "kubectl get pods -n tamv",
+    "k8s:logs": "kubectl logs -f deployment/tamv -n tamv"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -56,7 +101,7 @@
     "lucide-react": "^0.462.0",
     "next-themes": "^0.4.4",
     "react": "^18.3.1",
-    "react-day-picker": "^8.10.1",
+    "react-day-picker": "8.10.1",
     "react-dom": "^18.3.1",
     "react-hook-form": "^7.54.0",
     "react-resizable-panels": "^2.1.7",
@@ -71,9 +116,52 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
+    "@playwright/test": "^1.48.0",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
     "@types/node": "^22.10.2",
     "@types/react": "^18.3.14",
     "@types/react-dom": "^18.3.4",
-    "@types/three": "^0.170.0"
+    "@types/three": "^0.170.0",
+    "@typescript-eslint/eslint-plugin": "^8.15.0",
+    "@typescript-eslint/parser": "^8.15.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@vitest/coverage-v8": "^2.1.6",
+    "@vitest/ui": "^2.1.6",
+    "eslint": "^9.15.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-import-resolver-typescript": "^3.7.0",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.2.1",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-security": "^3.0.1",
+    "eslint-plugin-testing-library": "^6.4.0",
+    "eslint-plugin-unicorn": "^56.0.1",
+    "husky": "^9.1.6",
+    "jsdom": "^26.0.0",
+    "lint-staged": "^15.2.10",
+    "msw": "^2.7.0",
+    "prettier": "^3.3.3",
+    "prettier-plugin-tailwindcss": "^0.6.8",
+    "typedoc": "^0.27.2",
+    "typescript": "^5.7.2",
+    "vite-plugin-pwa": "^0.20.5",
+    "vite-plugin-svgr": "^4.3.0",
+    "vitest": "^2.1.6"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,md,json}": [
+      "prettier --write"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
   }
 }

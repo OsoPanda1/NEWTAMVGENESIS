@@ -1,0 +1,1761 @@
+openapi: 3.0.3
+info:
+  title: TAMV MD-X4 API
+  description: Transcendent Autonomous Metaverse Vision - Next Generation Metaverse Platform API
+  version: 1.0.0
+  contact:
+    name: TAMV Architecture Team
+    email: api@tamv.io
+  license:
+    name: Proprietary
+    url: https://tamv.io/legal
+
+servers:
+  - url: https://api.tamv.io/v1
+    description: Production server
+  - url: https://api.staging.tamv.io/v1
+    description: Staging server
+  - url: http://localhost:3000/v1
+    description: Development server
+
+security:
+  - BearerAuth: []
+  - ApiKeyAuth: []
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization
+  - name: Users
+    description: User management and profiles
+  - name: Worlds
+    description: Virtual world management
+  - name: Assets
+    description: Digital asset management
+  - name: Economy
+    description: Credits and transactions
+  - name: Social
+    description: Social features and content
+  - name: AI
+    description: Isabella AI services
+  - name: XR
+    description: Extended reality sessions
+
+paths:
+  # ==================== AUTHENTICATION ====================
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user account
+      operationId: registerUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            examples:
+              standard:
+                summary: Standard registration
+                value:
+                  email: user@example.com
+                  username: tamv_user
+                  password: SecurePassword123!
+                  displayName: TAMV User
+      responses:
+        '201':
+          description: User successfully registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      operationId: loginUser
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: User logout
+      operationId: logoutUser
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Logout successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/refresh:
+    post:
+      tags:
+        - Authentication
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/mfa/setup:
+    post:
+      tags:
+        - Authentication
+      summary: Setup multi-factor authentication
+      operationId: setupMFA
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: MFA setup initiated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MFASetupResponse'
+
+  /auth/mfa/verify:
+    post:
+      tags:
+        - Authentication
+      summary: Verify MFA code
+      operationId: verifyMFA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MFAVerifyRequest'
+      responses:
+        '200':
+          description: MFA verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  # ==================== USERS ====================
+  /users/me:
+    get:
+      tags:
+        - Users
+      summary: Get current user
+      operationId: getCurrentUser
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    patch:
+      tags:
+        - Users
+      summary: Update current user
+      operationId: updateCurrentUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /users/{userId}:
+    get:
+      tags:
+        - Users
+      summary: Get user by ID
+      operationId: getUserById
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /users/{userId}/follow:
+    post:
+      tags:
+        - Users
+      summary: Follow user
+      operationId: followUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Follow successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Users
+      summary: Unfollow user
+      operationId: unfollowUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Unfollow successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== WORLDS ====================
+  /worlds:
+    get:
+      tags:
+        - Worlds
+      summary: List worlds with pagination and filters
+      operationId: listWorlds
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [gallery, concert, meeting, game, meditation, custom]
+        - name: ownerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: isPublic
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [createdAt, updatedAt, popularity, name]
+        - name: sortOrder
+          in: query
+          schema:
+            type: string
+            enum: [asc, desc]
+      responses:
+        '200':
+          description: Worlds list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldList'
+
+    post:
+      tags:
+        - Worlds
+      summary: Create new world
+      operationId: createWorld
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorldRequest'
+      responses:
+        '201':
+          description: World created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/World'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /worlds/{worldId}:
+    get:
+      tags:
+        - Worlds
+      summary: Get world details
+      operationId: getWorld
+      parameters:
+        - name: worldId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: World details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/World'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags:
+        - Worlds
+      summary: Update world
+      operationId: updateWorld
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: worldId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorldRequest'
+      responses:
+        '200':
+          description: World updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/World'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+    delete:
+      tags:
+        - Worlds
+      summary: Delete world
+      operationId: deleteWorld
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: worldId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: World deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /worlds/{worldId}/join:
+    post:
+      tags:
+        - Worlds
+      summary: Join world session
+      operationId: joinWorld
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: worldId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JoinWorldRequest'
+      responses:
+        '200':
+          description: Joined world
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorldSession'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /worlds/{worldId}/leave:
+    post:
+      tags:
+        - Worlds
+      summary: Leave world session
+      operationId: leaveWorld
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: worldId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Left world
+
+  /worlds/{worldId}/players:
+    get:
+      tags:
+        - Worlds
+      summary: Get active players in world
+      operationId: getWorldPlayers
+      parameters:
+        - name: worldId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Active players list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PlayerList'
+
+  # ==================== ASSETS ====================
+  /assets:
+    get:
+      tags:
+        - Assets
+      summary: List assets
+      operationId: listAssets
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [model, texture, audio, video, script]
+        - name: worldId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: ownerId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: isForSale
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Assets list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssetList'
+
+    post:
+      tags:
+        - Assets
+      summary: Upload new asset
+      operationId: uploadAsset
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/UploadAssetRequest'
+      responses:
+        '201':
+          description: Asset uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /assets/{assetId}:
+    get:
+      tags:
+        - Assets
+      summary: Get asset details
+      operationId: getAsset
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Asset details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Asset'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Assets
+      summary: Delete asset
+      operationId: deleteAsset
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: assetId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Asset deleted
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  # ==================== ECONOMY ====================
+  /credits/balance:
+    get:
+      tags:
+        - Economy
+      summary: Get credit balance
+      operationId: getCreditBalance
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Credit balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditBalance'
+
+  /credits/purchase:
+    post:
+      tags:
+        - Economy
+      summary: Purchase credits
+      operationId: purchaseCredits
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PurchaseCreditsRequest'
+      responses:
+        '201':
+          description: Credits purchased
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditTransaction'
+
+  /credits/transfer:
+    post:
+      tags:
+        - Economy
+      summary: Transfer credits to another user
+      operationId: transferCredits
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TransferCreditsRequest'
+      responses:
+        '201':
+          description: Credits transferred
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreditTransaction'
+
+  /transactions:
+    get:
+      tags:
+        - Economy
+      summary: List transactions
+      operationId: listTransactions
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [purchase, earn, spend, gift, reward, transfer]
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Transactions list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransactionList'
+
+  # ==================== SOCIAL ====================
+  /posts:
+    get:
+      tags:
+        - Social
+      summary: List posts (feed)
+      operationId: listPosts
+      parameters:
+        - name: worldId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: userId
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Posts feed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PostList'
+
+    post:
+      tags:
+        - Social
+      summary: Create post
+      operationId: createPost
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostRequest'
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+
+  /posts/{postId}:
+    get:
+      tags:
+        - Social
+      summary: Get post
+      operationId: getPost
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Post data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    delete:
+      tags:
+        - Social
+      summary: Delete post
+      operationId: deletePost
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Post deleted
+
+  /posts/{postId}/resonate:
+    post:
+      tags:
+        - Social
+      summary: React to post (resonance)
+      operationId: resonatePost
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ResonanceRequest'
+      responses:
+        '201':
+          description: Resonance added
+
+  /posts/{postId}/comments:
+    get:
+      tags:
+        - Social
+      summary: Get post comments
+      operationId: getComments
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+        - name: page
+          in: query
+          schema:
+            type: integer
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Comments list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CommentList'
+
+    post:
+      tags:
+        - Social
+      summary: Add comment
+      operationId: addComment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCommentRequest'
+      responses:
+        '201':
+          description: Comment added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Comment'
+
+  # ==================== AI ====================
+  /ai/chat:
+    post:
+      tags:
+        - AI
+      summary: Chat with Isabella AI
+      operationId: chatWithIsabella
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChatRequest'
+      responses:
+        '200':
+          description: AI response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChatResponse'
+
+  /ai/generate:
+    post:
+      tags:
+        - AI
+      summary: Generate content using AI
+      operationId: generateContent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateRequest'
+      responses:
+        '201':
+          description: Generated content
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateResponse'
+
+  /ai/moderate:
+    post:
+      tags:
+        - AI
+      summary: Moderate content
+      operationId: moderateContent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ModerateRequest'
+      responses:
+        '200':
+          description: Moderation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ModerationResult'
+
+  # ==================== XR ====================
+  /xr/session/start:
+    post:
+      tags:
+        - XR
+      summary: Start XR session
+      operationId: startXRSession
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/StartXRSessionRequest'
+      responses:
+        '201':
+          description: XR session started
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XRSession'
+
+  /xr/session/{sessionId}:
+    get:
+      tags:
+        - XR
+      summary: Get XR session state
+      operationId: getXRSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Session state
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/XRSession'
+
+  /xr/session/{sessionId}/end:
+    post:
+      tags:
+        - XR
+      summary: End XR session
+      operationId: endXRSession
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '204':
+          description: Session ended
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+
+  schemas:
+    # Auth schemas
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - username
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+          minLength: 3
+          maxLength: 50
+          pattern: '^[a-zA-Z0-9_]+$'
+        password:
+          type: string
+          minLength: 8
+        displayName:
+          type: string
+          maxLength: 100
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: '#/components/schemas/User'
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+
+    RefreshTokenRequest:
+      type: object
+      required:
+        - refreshToken
+      properties:
+        refreshToken:
+          type: string
+
+    TokenResponse:
+      type: object
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        expiresIn:
+          type: integer
+
+    MFASetupResponse:
+      type: object
+      properties:
+        secret:
+          type: string
+        qrCode:
+          type: string
+
+    MFAVerifyRequest:
+      type: object
+      required:
+        - code
+      properties:
+        code:
+          type: string
+
+    # User schemas
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        username:
+          type: string
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+        bio:
+          type: string
+        walletAddress:
+          type: string
+        credits:
+          type: integer
+        reputation:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        displayName:
+          type: string
+        bio:
+          type: string
+        avatarUrl:
+          type: string
+
+    # World schemas
+    World:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+        title:
+          type: string
+        description:
+          type: string
+        sceneData:
+          type: object
+        worldType:
+          type: string
+          enum: [gallery, concert, meeting, game, meditation, custom]
+        isPublic:
+          type: boolean
+        maxPlayers:
+          type: integer
+        entranceFee:
+          type: integer
+        thumbnailUrl:
+          type: string
+        currentPlayers:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    WorldList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/World'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    CreateWorldRequest:
+      type: object
+      required:
+        - title
+        - worldType
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        sceneData:
+          type: object
+        worldType:
+          type: string
+          enum: [gallery, concert, meeting, game, meditation, custom]
+        isPublic:
+          type: boolean
+        maxPlayers:
+          type: integer
+        entranceFee:
+          type: integer
+
+    UpdateWorldRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        sceneData:
+          type: object
+        isPublic:
+          type: boolean
+        maxPlayers:
+          type: integer
+        entranceFee:
+          type: integer
+
+    JoinWorldRequest:
+      type: object
+      properties:
+        position:
+          $ref: '#/components/schemas/Vector3'
+        rotation:
+          $ref: '#/components/schemas/Quaternion'
+
+    WorldSession:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          format: uuid
+        worldId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        position:
+          $ref: '#/components/schemas/Vector3'
+        rotation:
+          $ref: '#/components/schemas/Quaternion'
+        joinedAt:
+          type: string
+          format: date-time
+
+    PlayerList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Player'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    Player:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        username:
+          type: string
+        displayName:
+          type: string
+        avatarUrl:
+          type: string
+        position:
+          $ref: '#/components/schemas/Vector3'
+        lastActive:
+          type: string
+          format: date-time
+
+    # Asset schemas
+    Asset:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        ownerId:
+          type: string
+          format: uuid
+        worldId:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+        assetType:
+          type: string
+          enum: [model, texture, audio, video, script]
+        storageUrl:
+          type: string
+        thumbnailUrl:
+          type: string
+        metadata:
+          type: object
+        price:
+          type: integer
+        isForSale:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    AssetList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Asset'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    UploadAssetRequest:
+      type: object
+      required:
+        - name
+        - assetType
+        - file
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        assetType:
+          type: string
+          enum: [model, texture, audio, video, script]
+        worldId:
+          type: string
+          format: uuid
+        file:
+          type: string
+          format: binary
+
+    # Economy schemas
+    CreditBalance:
+      type: object
+      properties:
+        userId:
+          type: string
+          format: uuid
+        balance:
+          type: integer
+        pendingBalance:
+          type: integer
+
+    CreditTransaction:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+        transactionType:
+          type: string
+          enum: [purchase, earn, spend, gift, reward, transfer]
+        referenceId:
+          type: string
+          format: uuid
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    PurchaseCreditsRequest:
+      type: object
+      required:
+        - amount
+        - paymentMethodId
+      properties:
+        amount:
+          type: integer
+          minimum: 100
+        paymentMethodId:
+          type: string
+
+    TransferCreditsRequest:
+      type: object
+      required:
+        - toUserId
+        - amount
+      properties:
+        toUserId:
+          type: string
+          format: uuid
+        amount:
+          type: integer
+          minimum: 1
+        message:
+          type: string
+
+    TransactionList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/CreditTransaction'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    # Social schemas
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        worldId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        mediaUrls:
+          type: array
+          items:
+            type: string
+        postType:
+          type: string
+          enum: [text, image, video, audio, link, world]
+        visibility:
+          type: string
+          enum: [public, followers, private]
+        resonanceCount:
+          type: integer
+        commentCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    PostList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    CreatePostRequest:
+      type: object
+      required:
+        - content
+        - postType
+      properties:
+        content:
+          type: string
+        mediaUrls:
+          type: array
+          items:
+            type: string
+        worldId:
+          type: string
+          format: uuid
+        postType:
+          type: string
+          enum: [text, image, video, audio, link, world]
+        visibility:
+          type: string
+          enum: [public, followers, private]
+
+    ResonanceRequest:
+      type: object
+      required:
+        - emotion
+      properties:
+        emotion:
+          type: string
+          enum: [love, joy, surprise, sadness, anger, fear, wonder, resonance]
+
+    Comment:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        postId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        content:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+        createdAt:
+          type: string
+          format: date-time
+
+    CommentList:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Comment'
+        meta:
+          $ref: '#/components/schemas/PaginationMeta'
+
+    CreateCommentRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+        parentId:
+          type: string
+          format: uuid
+
+    # AI schemas
+    ChatRequest:
+      type: object
+      required:
+        - message
+      properties:
+        message:
+          type: string
+        context:
+          type: object
+        conversationId:
+          type: string
+          format: uuid
+
+    ChatResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        conversationId:
+          type: string
+          format: uuid
+        emotion:
+          $ref: '#/components/schemas/EmotionAnalysis'
+
+    GenerateRequest:
+      type: object
+      required:
+        - prompt
+        - type
+      properties:
+        prompt:
+          type: string
+        type:
+          type: string
+          enum: [image, text, audio, scene]
+        options:
+          type: object
+
+    GenerateResponse:
+      type: object
+      properties:
+        result:
+          type: string
+        url:
+          type: string
+        metadata:
+          type: object
+
+    ModerateRequest:
+      type: object
+      required:
+        - content
+      properties:
+        content:
+          type: string
+        contentType:
+          type: string
+          enum: [text, image, audio]
+
+    ModerationResult:
+      type: object
+      properties:
+        isSafe:
+          type: boolean
+        categories:
+          type: object
+        score:
+          type: number
+
+    EmotionAnalysis:
+      type: object
+      properties:
+        primary:
+          type: string
+        intensity:
+          type: number
+        secondary:
+          type: array
+          items:
+            type: string
+
+    # XR schemas
+    StartXRSessionRequest:
+      type: object
+      required:
+        - worldId
+        - mode
+      properties:
+        worldId:
+          type: string
+          format: uuid
+        mode:
+          type: string
+          enum: [vr, ar, mr]
+        referenceSpace:
+          type: string
+          enum: [local, localFloor, bounded, unbounded]
+        options:
+          type: object
+
+    XRSession:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        worldId:
+          type: string
+          format: uuid
+        userId:
+          type: string
+          format: uuid
+        mode:
+          type: string
+        state:
+          type: string
+          enum: [active, paused, ended]
+        startedAt:
+          type: string
+          format: date-time
+
+    # Common schemas
+    PaginationMeta:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        totalPages:
+          type: integer
+        hasMore:
+          type: boolean
+
+    Vector3:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
+
+    Quaternion:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
+        w:
+          type: number
+
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                default: false
+              error:
+                type: object
+                properties:
+                  code:
+                    type: string
+                  message:
+                    type: string
+                  details:
+                    type: object
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          default: false
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+        timestamp:
+          type: string
+          format: date-time
+        requestId:
+          type: string
